@@ -60,8 +60,40 @@ FROM customers
 GROUP BY DATE_PART('year', registration_date)
 ORDER BY DATE_PART('year', registration_date);
 
+#Registration Count for each quarter for each year
+SELECT
+  DATE_PART('year', registration_date) AS registration_year,
+  DATE_PART('quarter', registration_date) AS registration_quarter,
+  COUNT(customer_id) AS registration_count
+FROM customers
+GROUP BY DATE_PART('year', registration_date) ,DATE_PART('quarter', registration_date)
+ORDER BY DATE_PART('year', registration_date) ,DATE_PART('quarter', registration_date);
+
+#Registration Count for each month for each year
+SELECT
+  DATE_PART('year', registration_date) AS registration_year,
+  DATE_PART('month', registration_date) AS registration_month,
+  COUNT(customer_id) AS registration_count
+FROM customers
+GROUP BY DATE_PART('year', registration_date) ,DATE_PART('month', registration_date)
+ORDER BY DATE_PART('year', registration_date) ,DATE_PART('month', registration_date);
 
 
+#displaying week label  where week = 35
+-This query will show the year and week number, and the earliest date in this week.
+SELECT
+  DATE_PART('year', registration_date) AS registration_year,
+  DATE_PART('week', registration_date) AS registration_week,
+  MIN(registration_date) AS week_label,
+  COUNT(customer_id) AS registration_count
+FROM customers
+where DATE_PART('week', registration_date)  = 35
+GROUP BY DATE_PART('year', registration_date) ,DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date) ,DATE_PART('week', registration_date)
+;
+
+
+--End of Introduction
 
 
 
