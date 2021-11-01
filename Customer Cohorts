@@ -1,1 +1,69 @@
-Now that a new customer has been acquired, the focus is to help the customer derive satisfaction and value from the product and services.
+A customer cohort is a group of customers that share a common characteristic over a certain time period.
+For instance, a group of customers that registered in a certain week can be a weekly registration cohort.
+Cohorts are often used when creating reports related to customer behavior.
+Now, let's take a look at the customer cohorts for a given channel.
+A channel defines how we obtained a customer: from social media, via friend referral, etc.
+
+#create a report which will count registration values in annual customer cohorts based on the channel.
+The customers table contains the channel ID for each user, but we join it with the channels table to get channel names for the report.
+Note that we only show channel names in the report, but we group by both the channel IDs and channel names.
+
+SELECT 
+count(customer_id) AS registration_count,
+DATE_PART('year', registration_date) AS registration_year,
+channel_name
+FROM customers cu
+JOIN channels ch
+ON cu.channel_id = ch.id
+GROUP BY DATE_PART('year', registration_date) ,channel_name
+ORDER BY DATE_PART('year', registration_date);
+
+
+#Instead of annual customer cohorts per channel, show weekly customer cohorts per channel in each year.
+SELECT 
+count(customer_id) AS registration_count,
+DATE_PART('year', registration_date) AS registration_year,
+channel_name,
+DATE_PART('week', registration_date) AS registration_week
+FROM customers cu
+JOIN channels ch
+ON cu.channel_id = ch.id
+GROUP BY DATE_PART('year', registration_date) ,channel_name, DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date), DATE_PART('week', registration_date);
+
+
+
+#Create a report to show the weekly counts of registration cohorts in 2017, based on the customer country.
+SELECT 
+count(customer_id) AS registration_count,
+country,
+DATE_PART('week', registration_date) AS registration_week
+FROM customers
+where extract(year FROM registration_date) = 2017
+GROUP BY DATE_PART('week', registration_date), country
+ORDER BY DATE_PART('week', registration_date);
+
+
+#No.of Registration in the current year
+SELECT 
+count(customer_id) AS No_of_registrations
+FROM CUSTOMERS
+where registration_date >= DATE_TRUNC('year', current_date);
+
+
+#Create a report showing the weekly counts of registration cohorts in 2017 based on the customer channel.
+SELECT 
+count(customer_id) AS No_of_registrations,
+DATE_PART('week', registration_date) AS registration_week,
+channel_name
+FROM Customers cu
+JOIN channels ch
+ON cu.channel_id = ch.id
+where extract(year from registration_date) = 2017
+GROUP BY DATE_PART('week', registration_date), channel_name
+ORDER BY DATE_PART('week', registration_date);
+
+
+--End of Customer Cohorts
+
+
