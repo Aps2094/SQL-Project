@@ -1,1 +1,123 @@
 In this stage, you can measure customer activity: how much they purchase, how often they use your product, etc.
+First, we'll look at active customers.
+We'll learn how to count the number of active customers – in total and in registration cohorts.
+Then we'll determine the average value of customer orders.
+Finally, we'll define "good customers" and see if they have any common characteristics that we can use in our marketing campaigns.
+
+//Number of Active Customers
+The number of active customers is an important metric in any business, especially in businesses offering their products or services online.
+Sometimes it's easy to say who is an active customer: for a subscription service someone with an active subscription is an active user, for a mobile app someone who has the app installed and uses it once a week is an active user, etc.
+For an e-store the definition of an "active customer" is not as straightforward.
+There are some customers who place orders every now and then, but there are also some who haven't been active for a long time.
+In our online supermarket, regular customers typically place one order a week, but we'll define "active customers" as all customers who've placed an order within the last 30 days.
+
+#Active Customers who have placed order within last 30 days:
+SELECT
+count(customer_id) AS active_customers
+from customers
+where CURRENT_DATE - last_order_date < INTERVAL '30' day;
+
+#No.of active Customers in Time Period Cohorts
+SELECT
+DATE_PART('year', registration_date) AS registration_year,
+DATE_PART('week', registration_date) AS registration_week,
+count(customer_id) AS active_customers
+from customers
+where  CURRENT_DATE -last_order_date < INTERVAL '30' day
+AND extract(year FROM registration_date) = 2017
+GROUP BY DATE_PART('year', registration_date), DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date),DATE_PART('week', registration_date) ;
+
+#Average order value for each weekly registration cohort.
+Knowing which customers are active is important, but it's equally important to understand how much revenue our customers generate.
+//this shows avergae value per customer
+SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  AVG(total_amount) AS average_order_value
+FROM customers c
+JOIN orders o
+  ON c.customer_id = o.customer_id
+GROUP BY DATE_PART('year', registration_date), DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date), DATE_PART('week', registration_date);
+
+
+//Now we want to know general average value among all the customers:
+Hence we use, Commom table expressions(CTEs):
+With average_per_customer AS(
+Select c.customer_id,
+  avg(total_amount) AS avg_amount
+  FROM customers c
+  JOIN orders o
+  ON c.customer_id = o.customer_id
+  GROUP BY c.customer_id
+  ORDER BY c.customer_id
+)
+Select avg(avg_amount) as global_avg_order_value
+FROM average_per_customer;
+
+
+#Find out the average number of orders placed in the last 180 days by customers who have been active (made a purchase) in the last 30 days.
+WITH orders_per_customer AS (
+  SELECT
+    c.customer_id,
+    COUNT(o.order_id) as order_count
+  FROM customers c
+  JOIN orders o
+    ON c.customer_id = o.customer_id
+  WHERE CURRENT_DATE - last_order_date < INTERVAL '30' day
+  AND CURRENT_DATE - o.order_date < INTERVAL '180' day
+  GROUP BY c.customer_id
+)
+
+SELECT AVG(order_count) AS avg_order_count
+FROM orders_per_customer;
+
+
+
+
+
+#Find good Customers in Weekly Registration Cohorts:
+WITH good_customers AS (
+SELECT
+  c.customer_id,
+  registration_date,
+  AVG(total_amount) AS avg_order_value
+FROM customers c
+JOIN orders o
+  ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, registration_date
+HAVING AVG(total_amount) > 1636
+)
+SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  COUNT(*) AS good_customers
+FROM good_customers
+GROUP BY DATE_PART('year', registration_date), DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date), DATE_PART('week', registration_date);
+
+
+--End of Customer Activity
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
