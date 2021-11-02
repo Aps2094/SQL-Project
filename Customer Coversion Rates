@@ -1,1 +1,154 @@
 Conversion is the stage where customers purchase a product or service.
+A conversion occurs when a customer completes a desired action, such as signing up for the newsletter, social media share, filling out a form, or making a purchase.
+We typically talk about conversion rates, which are the percentages of prospective customers who take a specific action that we want.
+In our data model, we'll take a look at registered customers.
+How many of them make their first purchase within one week of registration, two weeks of registration, etc.?
+Customers may register without making any purchase simply to get our newsletter; they'll make their first purchase only when they get a newsletter with an offer that appeals to them.
+In this case, analyzing conversion rates can help us find out which newsletter campaigns perform better than the others.
+
+--GLOBAL LIFETIME CONVERSION RATE:
+Step 1:
+Let's say we want to calculate the global lifetime conversion rate.
+In other words, we want to know the percentage of registered customers who've made at least one purchase.
+This is a good indicator of the general condition of our business.
+
+#To calculate the rate, we first need to find the total number of customers and the number of customers who've made at least one purchase.
+Select
+count(customer_id) AS total_customers,
+count(first_order_id) AS customers_order
+FROM Customers;
+
+Step 2: #Now that we know how to find the count of all customers and the count of those who've made a purchase, we can calculate the global lifetime conversion rate:
+Select round(count(first_order_id)/CAST(count(customer_id) AS numeric), 2) AS conversion_rate
+FROM Customers;
+
+#Find the conversion rate for each customer channel. 
+Select round(count(first_order_id)*100.0/(count(customer_id)), 2) AS conversion_rate,
+channel_name
+FROM Customers cu
+JOIN channels ch
+on cu.channel_id = ch.id
+GROUP BY channel_name;
+
+#Global lifetime conversion rate is a useful indicator, but now we'd like to run a deeper analysis.
+Find the conversion rate for weekly registration cohorts.
+Select 
+DATE_PART('year', registration_date) AS registration_year,
+DATE_PART('week', registration_date) AS registration_week,
+round(count(first_order_id)*100.0/(count(customer_id)), 2) AS conversion_rate
+FROM Customers 
+GROUP BY DATE_PART('year', registration_date), DATE_PART('week', registration_date)  
+ORDER BY DATE_PART('year', registration_date), DATE_PART('week', registration_date);
+
+
+
+#So far, we've only compared the number of customers who've made or didn't make a purchase.
+Now, go deeper and analyze how much time customers take between registration and their first purchase.
+SELECT
+  customer_id,email,
+  first_order_date - registration_date AS days_to_first_order
+FROM customers;
+
+
+#create a report showing the average time from registration to first order in weekly registration cohorts.
+SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  AVG(first_order_date - registration_date) AS avg_days_to_first_order
+FROM customers
+GROUP BY DATE_PART('year', registration_date), DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date), DATE_PART('week', registration_date);
+
+
+//Custom Clasifications
+#To create the last report type in this part, we'll first need to learn how to create our own classifications.
+Suppose we want to show each customer along with a custom category label.
+The label will indicate how long they took to make their first order.
+SELECT
+  full_name,
+  country,
+ first_order_date,
+ CASE
+ WHEN first_order_date IS NULL THEN 'no order'
+ WHEN first_order_date - registration_date <= INTERVAL '7' day THEN '1 week'
+ WHEN first_order_date - registration_date <= INTERVAL '14' day THEN '2 weeks'
+ ELSE 'more_than_2_weeks'
+ END AS time_to_first_order
+FROM customers ;
+
+
+
+//Conversion rate Report
+#We now want to create a conversion chart.
+This report should show weekly registration cohorts in rows and the number of conversions (i.e., first purchases) within the first week, the second week, etc.
+
+
+SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  COUNT(*) AS registered_count,
+  COUNT(CASE
+    WHEN first_order_id IS NULL
+    THEN customer_id
+    END) AS no_sale,
+  COUNT(CASE
+    WHEN first_order_date - registration_date <  INTERVAL '7' day
+    THEN customer_id
+    END) AS first_week,
+  COUNT(CASE
+    WHEN first_order_date - registration_date >= INTERVAL '7' day
+     AND first_order_date - registration_date <  INTERVAL '14' day
+    THEN customer_id
+    END) AS second_week,
+  COUNT(CASE
+    WHEN first_order_date - registration_date >= INTERVAL '14' day
+    THEN customer_id
+    END) AS after_second_week
+FROM customers
+GROUP BY DATE_PART('year', registration_date), DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date), DATE_PART('week', registration_date);
+
+
+
+#Create a conversion chart for monthly registration cohorts. Show the following columns:
+year
+month
+registered_count
+no_sale
+three_days – the number of customers who made a purchase within 3 days from registration.
+first_week – the number of customers who made a purchase during the first week but not within the first three days.
+after_first_week – the number of customers who made a purchase after the 7th day.
+Order the results by year and month.
+
+SELECT
+  DATE_PART('year',  registration_date) AS year,
+  DATE_PART('month', registration_date) AS month,
+  COUNT(*) AS registered_count,
+  COUNT(CASE WHEN first_order_id IS NULL THEN customer_id END) AS no_sale,
+  COUNT(CASE WHEN first_order_date - registration_date < INTERVAL '3' day THEN customer_id END) AS three_days,
+  COUNT(CASE WHEN first_order_date - registration_date BETWEEN INTERVAL '3' day AND INTERVAL '6' day THEN customer_id END) AS first_week,
+  COUNT(CASE WHEN first_order_date - registration_date >= INTERVAL '7' day THEN customer_id END) AS after_first_week
+FROM customers
+GROUP BY DATE_PART('year', registration_date), DATE_PART('month', registration_date)
+ORDER BY DATE_PART('year', registration_date), DATE_PART('month', registration_date);
+
+
+
+
+-- END OF CONVERSION RATES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
