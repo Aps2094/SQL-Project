@@ -1,0 +1,64 @@
+//For each weekly registration cohort, we want to see the percentage of customers still active 30, 60, and 90 days after the registration date.
+we can analyze a given signup cohort and see what percentage of customers were still active after one, two, or three months.
+Customer retention figures will inevitably decrease over time.
+Comparing these values can help us determine if our customers are leaving us too quickly.
+
+SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  COUNT(CASE
+    WHEN last_order_date - registration_date > INTERVAL '30' day
+    THEN customer_id
+  END) * 100.0 / COUNT(customer_id) AS percent_active_30d,
+  COUNT(CASE
+    WHEN last_order_date - registration_date > INTERVAL '60' day
+    THEN customer_id
+  END) * 100.0 / COUNT(customer_id) AS percent_active_60d,
+  COUNT(CASE
+    WHEN last_order_date - registration_date > INTERVAL '90' day
+    THEN customer_id
+  END) * 100.0 / COUNT(customer_id) AS percent_active_90d
+FROM customers
+GROUP BY
+  DATE_PART('year', registration_date),
+  DATE_PART('week', registration_date)
+ORDER BY
+  DATE_PART('year', registration_date),
+  DATE_PART('week', registration_date);
+  
+  
+  #Create a customer retention chart in weekly signup cohorts. It should have the following columns:
+year
+week
+percent_active_10d (the percentage of customers still active 10 days after their registration).
+percent_active_30d (the percentage of customers still active 30 days after their registration).
+percent_active_60d (the percentage of customers still active 60 days after their registration).
+Order the results by year and week.
+
+
+
+SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  COUNT(CASE
+    WHEN last_order_date - registration_date > INTERVAL '10' day
+    THEN customer_id
+  END) * 100.0 / COUNT(customer_id) AS percent_active_10d,
+  COUNT(CASE
+    WHEN last_order_date - registration_date > INTERVAL '30' day
+    THEN customer_id
+  END) * 100.0 / COUNT(customer_id) AS percent_active_30d,
+  COUNT(CASE
+    WHEN last_order_date - registration_date > INTERVAL '60' day
+    THEN customer_id
+  END) * 100.0 / COUNT(customer_id) AS percent_active_60d
+FROM customers
+GROUP BY
+  DATE_PART('year', registration_date),
+  DATE_PART('week', registration_date)
+ORDER BY
+  DATE_PART('year', registration_date),
+  DATE_PART('week', registration_date);
+  
+  
+  --End of Customer Retention
