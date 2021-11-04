@@ -2,3 +2,57 @@ The final stage in the customer lifecycle is customer churn.
 Inevitably, customers will stop using your product.
 Customer churn is the percentage of customers that stopped using your product or service during a certain time frame.
 Understanding the customer lifecycle is very important for all businesses.
+Inevitably, customers will stop using our services at some point.
+There can be many reasons for this: they may want to go to our competitors, or they may simply no longer need our services.
+This phenomenon is called "customer churn."
+On the other hand, "customer retention" is when we've succeeded in keeping a customer active during a given period.
+It's not always easy to determine if a given customer has "churned."
+After all, customers don't usually explicitly tell us when they leave, especially in businesses like e-stores.
+Instead, we need to identify such customers ourselves and define our own churn criteria.
+Depending on the business type, you may want to use the last login date, the last purchase date, the last subscription renewal event, etc.
+Each business will approach customer churn differently.
+
+
+#In this business, a churned Customer is the one who has not placed an order in more than 30 days:
+SELECT
+ count(*) as churned_customers
+ from Customers
+ where CURRENT_DATE -last_order_date > INTERVAL '30' day;
+ 
+ 
+ 
+ #Churned Customers in Weekyly cohorts:
+ SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  COUNT(*) As churned_customers
+FROM customers
+WHERE CURRENT_DATE - last_order_date > INTERVAL '30' day
+GROUP BY
+  DATE_PART('year', registration_date),
+  DATE_PART('week', registration_date)
+ORDER BY
+  DATE_PART('year', registration_date),
+  DATE_PART('week', registration_date);
+  
+  
+  #compare the number of churned customers to the total number of customers in a given registration cohort.
+  SELECT
+  DATE_PART('year', registration_date) AS year,
+  DATE_PART('week', registration_date) AS week,
+  COUNT(customer_id) AS all_customers,
+  COUNT(CASE WHEN CURRENT_DATE - last_order_date > INTERVAL '30' day THEN customer_id END) AS churned_customers,
+  COUNT(CASE WHEN CURRENT_DATE - last_order_date > INTERVAL '30' day THEN customer_id END) * 100.0 / COUNT(customer_id) AS churned_percentage
+FROM customers
+GROUP BY DATE_PART('year', registration_date), DATE_PART('week', registration_date)
+ORDER BY DATE_PART('year', registration_date), DATE_PART('week', registration_date);
+
+
+-- End of Customer Churn
+  
+  
+  
+  
+  
+  
+  
